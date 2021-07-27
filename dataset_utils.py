@@ -28,7 +28,7 @@ class CAPE_utils():
         self.dataset_dir = dataset_dir
         self.faces = np.load(join(dataset_dir, 'misc', 'smpl_tris.npy'))
         self.mesh_lib = mesh_lib
-     
+
 
     def load_single_frame(self, npz_fn):
         '''
@@ -37,7 +37,7 @@ class CAPE_utils():
         data = np.load(npz_fn)
         return data['v_cano'], data['v_posed'], data['pose'], data['transl']
 
-    
+
     def calc_clo_disp(self, v_cano, minimal_cano):
     	# calc disps
         return v_cano - minimal_cano
@@ -49,17 +49,17 @@ class CAPE_utils():
         how to get clothing displacements, with an visualization.
         '''
         from psbody.mesh import Mesh, MeshViewer, MeshViewers
-        
+
         gender = pkl.load(open(join(self.dataset_dir, 'misc', 'subj_genders.pkl'), 'rb'))[subj]
         minimal_fn = join(dataset_dir, 'minimal_body_shape', subj, '{}_minimal.npy'.format(subj))
         minimal_cano = np.load(minimal_fn) # minimal clothed body shape, canonical pose
-        
+
         data_dir = join(dataset_dir, 'sequences', subj, seq_name)
         data_choice = os.listdir(data_dir)[0] # just load 1 data frame for demo
-        data_path = join(data_dir, data_choice) 
+        data_path = join(data_dir, data_choice)
         print("\n=======================\n")
         print('Visualizing: {}, {}\n'.format(subj, data_choice))
-            
+
         '''
         clo_cano: vertices of clothed, canonical (with pose dependent clo deformation)
         clo_posed: vertices of clothed, posed, translated
@@ -76,12 +76,12 @@ class CAPE_utils():
         print("On screen: minimally clothed body in canonical pose VS. clothed body in canonical pose, color encoded by the norm of clothing displacements.")
         print("\n=======================\n")
         vc = np.linalg.norm(clo_disps, axis=-1)
-        mesh_clothed_colored.set_vertex_colors_from_weights(vc) 
+        mesh_clothed_colored.set_vertex_colors_from_weights(vc)
         mvs = MeshViewers(shape=(1,2), keepalive=True)
         mvs[0][0].static_meshes = [Mesh(minimal_cano, self.faces)]
         mvs[0][1].static_meshes = [mesh_clothed_colored]
 
-    
+
     def extract_mesh_seq(self, subj, seq_name, option='posed'):
         '''
         extract the vertices from npz files and write the mesh to .obj files
@@ -99,7 +99,7 @@ class CAPE_utils():
             verts = v_posed if option == 'posed' else v_cano
 
             mesh_frame_name = basename(fn).replace('npz', 'obj')
-            
+
             if self.mesh_lib == 'trimesh':
                 import trimesh
                 mm = trimesh.Trimesh(verts, self.faces, process=False)
@@ -111,17 +111,17 @@ class CAPE_utils():
 
     def visualize_sequence(self, subj, seq_name, option='posed'):
         '''
-        extracts vertex info from npz files, write to obj, and 
+        extracts vertex info from npz files, write to obj, and
         render seq (front view) into a video to visualize, using ffmpeg
         args:
             subj: subject id, e.g. 00032
             seq_name: sequence name in the format of "garment_motion", e.g. shortlong_punching
             option: 'posed' or 'canonical', whether to visualize the posed meshes or canonical meshes
-        '''      
+        '''
         video_savedir = join(self.dataset_dir, 'visualization', subj)
         os.makedirs(video_savedir, exist_ok=True)
         video_fn = join(video_savedir, '{}_{}.mp4'.format(seq_name, option))
-        
+
         # check if the meshes are already extracted; if not, extract first
         mesh_dir = join(self.dataset_dir, 'meshes', subj, seq_name, option)
         if not exists(mesh_dir):
@@ -165,9 +165,14 @@ class CAPE_utils():
             valign = np.load(aligns_list[i])['v_posed']
             malign = Mesh(valign, self.faces)
             malign.set_vertex_colors(np.array([1,0,0]))
+
+            mesh_dir = join(self.dataset_dir, 'scans', subj, seq_name)
+            mscan.write_obj(join(mesh_dir, i))
+            malign.write_obj(join(mesh_dir, i))
+
             mv.static_meshes = [mscan, malign]
             input('Press Enter to continue')
-        
+
 
 if __name__ == '__main__':
     import argparse
@@ -198,7 +203,7 @@ if __name__ == '__main__':
 
     if args.extract:
     	cape.extract_mesh_seq(args.subj, args.seq_name, option=args.option)
-    
+
     if args.demo_disps:
         cape.demo(args.subj, args.seq_name)
 
