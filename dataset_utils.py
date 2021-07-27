@@ -167,8 +167,8 @@ class CAPE_utils():
             malign.set_vertex_colors(np.array([1,0,0]))
 
             mesh_dir = join(self.dataset_dir, 'scans', subj, seq_name)
-            mscan.write_obj(join(mesh_dir, i))
-            malign.write_obj(join(mesh_dir, i))
+            mscan.write_obj(join(mesh_dir, '{:0>2d}.png'.format(i)))
+            malign.write_obj(join(mesh_dir, '{:0>2d}.png'.format(i)))
 
             mv.static_meshes = [mscan, malign]
             input('Press Enter to continue')
